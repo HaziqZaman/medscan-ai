@@ -139,8 +139,8 @@ class MiDeSeCB2Predictor:
         self,
         model_path: str | Path,
         image_size: int = 256,
-        threshold: float = 0.5,
-        min_component_area: int = 20,
+        threshold: float = 0.30,
+        min_component_area: int = 8,
         device: str | None = None,
     ):
         self.model_path = Path(model_path)
@@ -169,24 +169,33 @@ class MiDeSeCB2Predictor:
         tensor = torch.tensor(chw, dtype=torch.float32).unsqueeze(0).to(self.device)
         return tensor, original_h, original_w
 
-    def postprocess_mask(self, prob_map: np.ndarray, original_w: int, original_h: int):
-        pred_bin_small = (prob_map > self.threshold).astype(np.uint8) * 255
+    def postprocess_mask(
+        self,
+        prob_map: np.ndarray,
+        original_w: int,
+        original_h: int,
+        threshold: float | None = None,
+        min_component_area: int | None = None,
+    ):
+        threshold = self.threshold if threshold is None else threshold
+        min_component_area = self.min_component_area if min_component_area is None else min_component_area
+
+        pred_bin_small = (prob_map > threshold).astype(np.uint8) * 255
         pred_bin = cv2.resize(pred_bin_small, (original_w, original_h), interpolation=cv2.INTER_NEAREST)
 
-        # remove tiny noisy components
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(pred_bin, connectivity=8)
         cleaned = np.zeros_like(pred_bin)
 
         for idx in range(1, num_labels):
             area = stats[idx, cv2.CC_STAT_AREA]
-            if area >= self.min_component_area:
+            if area >= min_component_area:
                 cleaned[labels == idx] = 255
 
         return cleaned
 
     def create_overlay(self, image_bgr: np.ndarray, mask_bin: np.ndarray):
         color_mask = np.zeros_like(image_bgr)
-        color_mask[:, :, 2] = mask_bin  # red
+        color_mask[:, :, 2] = mask_bin
 
         overlay = cv2.addWeighted(image_bgr, 1.0, color_mask, 0.35, 0)
 
@@ -202,7 +211,23 @@ class MiDeSeCB2Predictor:
             logits = self.model(tensor)
             probs = torch.sigmoid(logits).squeeze().cpu().numpy()
 
+        used_threshold = self.threshold
+        used_min_area = self.min_component_area
+
         mask_bin = self.postprocess_mask(probs, original_w, original_h)
+
+        # fallback if mask is empty
+        if np.count_nonzero(mask_bin) == 0:
+            used_threshold = 0.20
+            used_min_area = 4
+            mask_bin = self.postprocess_mask(
+                probs,
+                original_w,
+                original_h,
+                threshold=used_threshold,
+                min_component_area=used_min_area,
+            )
+
         overlay = self.create_overlay(image_bgr, mask_bin)
 
         object_count, objects = mask_to_connected_components(mask_bin)
@@ -210,6 +235,8 @@ class MiDeSeCB2Predictor:
 
         positive_pixels = int(np.count_nonzero(mask_bin))
         coverage_ratio = float(positive_pixels / mask_bin.size)
+        max_probability = float(np.max(probs))
+        mean_probability = float(np.mean(probs))
 
         findings = {
             "submodel": "midesec_b2",
@@ -217,8 +244,10 @@ class MiDeSeCB2Predictor:
             "mitotic_activity_level": activity_level,
             "mask_positive_pixels": positive_pixels,
             "coverage_ratio": coverage_ratio,
-            "threshold": self.threshold,
-            "min_component_area": self.min_component_area,
+            "threshold": used_threshold,
+            "min_component_area": used_min_area,
+            "max_probability": round(max_probability, 4),
+            "mean_probability": round(mean_probability, 4),
             "objects": objects,
         }
 
@@ -242,7 +271,6 @@ class MiDeSeCB2Predictor:
         result = self.predict_from_image(image_bgr)
         result["findings"]["source_image"] = str(image_path)
         return result
-
 
 if __name__ == "__main__":
     MODEL_PATH = "backend/ml/model_b/runs/midesec_b2/best_model.pth"
