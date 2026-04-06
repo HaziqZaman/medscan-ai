@@ -1,0 +1,217 @@
+.about-page {
+  min-height: 100vh;
+  background: #0b0b0b;
+  font-family: "Syne", "Segoe UI", sans-serif;
+}
+
+.about-body {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+.about-header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.about-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  letter-spacing: -1.5px;
+  margin-bottom: 0.5rem;
+}
+
+.about-header h1 span { color: #17c964; }
+
+.about-header p {
+  color: rgba(243, 245, 244, 0.4);
+  font-size: 0.95rem;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* PROJECT INFO */
+.about-mission {
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.15);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-mission::before {
+  content: "";
+  position: absolute;
+  top: -60px; left: 50%;
+  transform: translateX(-50%);
+  width: 300px; height: 200px;
+  background: radial-gradient(circle, rgba(23, 201, 100, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.about-mission h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.5px;
+}
+
+.about-mission p {
+  color: rgba(243, 245, 244, 0.5);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* TECH STACK */
+.about-stack {
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.12);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.about-stack h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f3f5f4;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.3px;
+}
+
+.stack-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+}
+
+.stack-item {
+  background: rgba(23, 201, 100, 0.04);
+  border: 1px solid rgba(23, 201, 100, 0.1);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.stack-item-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.stack-item-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(243, 245, 244, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.2rem;
+}
+
+.stack-item-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #17c964;
+}
+
+/* TEAM */
+.about-team {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.team-card {
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.12);
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  transition: border-color 0.25s ease;
+}
+
+.team-card:hover {
+  border-color: rgba(23, 201, 100, 0.3);
+}
+
+.team-avatar {
+  width: 60px;
+  height: 60px;
+  background: rgba(23, 201, 100, 0.1);
+  border: 2px solid rgba(23, 201, 100, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.team-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  letter-spacing: -0.3px;
+}
+
+.team-role {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #17c964;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.team-tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.team-task {
+  background: rgba(23, 201, 100, 0.06);
+  border: 1px solid rgba(23, 201, 100, 0.12);
+  color: rgba(243, 245, 244, 0.45);
+  font-size: 0.7rem;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+/* DISCLAIMER */
+.about-disclaimer {
+  background: rgba(239, 68, 68, 0.04);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.about-disclaimer h3 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(239, 68, 68, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.about-disclaimer p {
+  font-size: 0.82rem;
+  color: rgba(243, 245, 244, 0.35);
+  line-height: 1.6;
+}

@@ -1,0 +1,358 @@
+.knowledge-page {
+  min-height: 100vh;
+  background: #0b0b0b;
+  font-family: "Syne", "Segoe UI", sans-serif;
+}
+
+.knowledge-body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+.knowledge-header {
+  margin-bottom: 2.5rem;
+}
+
+.knowledge-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  letter-spacing: -1px;
+}
+
+.knowledge-header h1 span { color: #17c964; }
+
+.knowledge-header p {
+  color: rgba(243, 245, 244, 0.4);
+  font-size: 0.88rem;
+  margin-top: 0.3rem;
+}
+
+/* CATEGORY TABS */
+.knowledge-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid rgba(243, 245, 244, 0.1);
+  color: rgba(243, 245, 244, 0.4);
+  font-size: 0.8rem;
+  font-family: inherit;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tab-btn.active,
+.tab-btn:hover {
+  border-color: rgba(23, 201, 100, 0.4);
+  color: #17c964;
+  background: rgba(23, 201, 100, 0.06);
+}
+
+/* TOPIC GRID */
+.knowledge-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.knowledge-card {
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.12);
+  border-radius: 16px;
+  padding: 1.75rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.knowledge-card:hover {
+  border-color: rgba(23, 201, 100, 0.3);
+  transform: translateY(-2px);
+}
+
+.knowledge-card.expanded {
+  border-color: rgba(23, 201, 100, 0.35);
+  grid-column: 1 / -1;
+}
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.card-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.card-chevron {
+  color: rgba(23, 201, 100, 0.4);
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+
+.knowledge-card.expanded .card-chevron {
+  transform: rotate(180deg);
+}
+
+.knowledge-card h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f3f5f4;
+  margin: 0.75rem 0 0.4rem;
+  letter-spacing: -0.3px;
+}
+
+.knowledge-card .preview {
+  font-size: 0.83rem;
+  color: rgba(243, 245, 244, 0.4);
+  line-height: 1.55;
+}
+
+.card-content {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(23, 201, 100, 0.1);
+  font-size: 0.88rem;
+  color: rgba(243, 245, 244, 0.65);
+  line-height: 1.7;
+}
+
+.card-content p {
+  margin-bottom: 0.75rem;
+}
+
+.card-content p:last-child {
+  margin-bottom: 0;
+}
+
+.card-tag {
+  display: inline-block;
+  background: rgba(23, 201, 100, 0.08);
+  border: 1px solid rgba(23, 201, 100, 0.15);
+  color: #17c964;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+.source {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #888;
+}
+
+.source a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.source a:hover {
+  color: #17c964;
+}
+/* ===== NEW TABLE-BASED KNOWLEDGE CENTER ===== */
+
+.knowledge-controls {
+  margin-bottom: 1.5rem;
+}
+
+.knowledge-search {
+  width: 100%;
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.15);
+  color: #f3f5f4;
+  border-radius: 14px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  outline: none;
+  margin-bottom: 1rem;
+  transition: all 0.25s ease;
+}
+
+.knowledge-search::placeholder {
+  color: rgba(243, 245, 244, 0.35);
+}
+
+.knowledge-search:focus {
+  border-color: rgba(23, 201, 100, 0.4);
+  box-shadow: 0 0 0 3px rgba(23, 201, 100, 0.08);
+}
+
+.knowledge-meta {
+  margin-bottom: 1rem;
+  color: rgba(243, 245, 244, 0.45);
+  font-size: 0.82rem;
+}
+
+.knowledge-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.12);
+  border-radius: 18px;
+  margin-bottom: 1.5rem;
+}
+
+.knowledge-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.knowledge-table thead {
+  background: rgba(23, 201, 100, 0.06);
+}
+
+.knowledge-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #17c964;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(23, 201, 100, 0.12);
+}
+
+.knowledge-table td {
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  color: rgba(243, 245, 244, 0.78);
+  border-bottom: 1px solid rgba(23, 201, 100, 0.08);
+  vertical-align: top;
+}
+
+.knowledge-table tbody tr {
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.knowledge-table tbody tr:hover {
+  background: rgba(23, 201, 100, 0.05);
+}
+
+.selected-row {
+  background: rgba(23, 201, 100, 0.08);
+}
+
+.knowledge-detail {
+  background: #021a17;
+  border: 1px solid rgba(23, 201, 100, 0.14);
+  border-radius: 18px;
+  padding: 1.5rem;
+}
+
+.detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.detail-badge {
+  display: inline-block;
+  background: rgba(23, 201, 100, 0.08);
+  border: 1px solid rgba(23, 201, 100, 0.15);
+  color: #17c964;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.8rem;
+}
+
+.knowledge-detail h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  margin: 0;
+  letter-spacing: -0.4px;
+}
+
+.detail-subcategory {
+  margin-top: 0.35rem;
+  color: rgba(243, 245, 244, 0.4);
+  font-size: 0.82rem;
+}
+
+.detail-summary {
+  color: rgba(243, 245, 244, 0.7);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.detail-description p {
+  color: rgba(243, 245, 244, 0.8);
+  font-size: 0.92rem;
+  line-height: 1.8;
+  margin: 0 0 1rem 0;
+}
+
+.detail-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 1.2rem;
+}
+
+.keyword-chip {
+  background: rgba(243, 245, 244, 0.05);
+  border: 1px solid rgba(243, 245, 244, 0.08);
+  color: rgba(243, 245, 244, 0.7);
+  font-size: 0.74rem;
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+
+.detail-source {
+  font-size: 0.82rem;
+  color: rgba(243, 245, 244, 0.55);
+}
+
+.detail-source a {
+  color: #17c964;
+  text-decoration: none;
+}
+
+.detail-source a:hover {
+  text-decoration: underline;
+}
+
+.knowledge-empty {
+  padding: 1.2rem;
+  color: rgba(243, 245, 244, 0.45);
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .knowledge-body {
+    padding: 1.5rem 1rem;
+  }
+
+  .knowledge-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .knowledge-detail {
+    padding: 1.1rem;
+  }
+}

@@ -1,0 +1,71 @@
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2.5rem;
+  height: 64px;
+  background: rgba(2, 10, 6, 0.85);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(23, 201, 100, 0.15);
+}
+
+.navbar-logo {
+  font-family: "Syne", "Segoe UI", sans-serif;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #f3f5f4;
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.navbar-logo span {
+  color: #17c964;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-link {
+  color: rgba(243, 245, 244, 0.55);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 20px;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.nav-link:hover {
+  color: #f3f5f4;
+  background: rgba(23, 201, 100, 0.08);
+}
+
+.nav-link.active {
+  color: #17c964;
+  background: rgba(23, 201, 100, 0.12);
+}
+
+.nav-logout {
+  margin-left: 0.75rem;
+  background: transparent;
+  border: 1px solid rgba(23, 201, 100, 0.35);
+  color: #17c964;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 6px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  letter-spacing: 0.3px;
+}
+
+.nav-logout:hover {
+  background: rgba(23, 201, 100, 0.12);
+}

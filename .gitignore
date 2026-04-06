@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+.env
+
+# Database
+*.db
+
+# Model weights only
+*.pth
+*.pt
+
+# Dataset images (data folders only, not code)
+backend/ml/model_b/data/
+backend/ml/model_b/runs/
+backend/ml/model_b/test_results/
+
+# Generated storage
+backend/storage/
+
+# Temp files
+backend/temp*
+backend/temp_image*
+
+# Demo images
+demo_images/
+
+# Frontend asset images
+frontend/src/assets/images/
+
+# Node
+frontend/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

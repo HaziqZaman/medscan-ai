@@ -1,0 +1,32 @@
+/* GLOBAL RESET */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  background:#0c0c0c;
+  color:#111;
+}
+
+
+/* COLOR SYSTEM */
+
+:root{
+
+  --primary:#17c964;
+  --primary-soft:#1ed760;
+
+  --dark:#0b0b0b;
+  --panel-dark:#021a17;
+
+  --light:#f3f5f4;
+
+  --radius:26px;
+
+  --transition:0.35s ease;
+
+}

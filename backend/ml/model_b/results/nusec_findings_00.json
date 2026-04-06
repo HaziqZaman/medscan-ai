@@ -1,0 +1,10 @@
+{
+  "estimated_nuclei_count": 151,
+  "nuclei_density_percent": 10.28,
+  "average_nucleus_area_px": 44.62,
+  "size_variation_std_px": 16.17,
+  "average_irregularity_score": 0.0454,
+  "density_level": "moderate",
+  "irregularity_level": "low",
+  "interpretation": "The predicted nuclei pattern shows moderate nuclei density with low shape irregularity."
+}
