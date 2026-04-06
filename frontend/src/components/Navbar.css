@@ -1,71 +1,207 @@
+/* ─── NAVBAR ────────────────────────────────────────────────── */
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2.5rem;
+  padding: 0 2rem;
   height: 64px;
-  background: rgba(2, 10, 6, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(23, 201, 100, 0.15);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(23, 201, 100, 0.2);
+  box-shadow: 0 1px 12px rgba(15, 31, 23, 0.07);
 }
 
+/* ─── LOGO ──────────────────────────────────────────────────── */
 .navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: "Syne", "Segoe UI", sans-serif;
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 800;
-  color: #f3f5f4;
+  color: #0f1f17;
   text-decoration: none;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
+  flex-shrink: 0;
+}
+
+.navbar-logo .logo-icon {
+  width: 30px;
+  height: 30px;
+  background: #17c964;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
 }
 
 .navbar-logo span {
   color: #17c964;
 }
 
+/* ─── NAV LINKS ─────────────────────────────────────────────── */
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
 .nav-link {
-  color: rgba(243, 245, 244, 0.55);
+  color: #4a6b58;
   text-decoration: none;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 500;
-  padding: 6px 14px;
-  border-radius: 20px;
-  transition: all 0.25s ease;
-  letter-spacing: 0.3px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  transition: all 0.22s ease;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .nav-link:hover {
-  color: #f3f5f4;
-  background: rgba(23, 201, 100, 0.08);
+  color: #0f1f17;
+  background: #e8f8ef;
 }
 
 .nav-link.active {
-  color: #17c964;
-  background: rgba(23, 201, 100, 0.12);
+  color: #0ea050;
+  background: #d4f5e3;
+  font-weight: 600;
 }
 
+/* ─── LOGOUT BUTTON ─────────────────────────────────────────── */
 .nav-logout {
-  margin-left: 0.75rem;
+  margin-left: 0.6rem;
   background: transparent;
-  border: 1px solid rgba(23, 201, 100, 0.35);
+  border: 1.5px solid rgba(23, 201, 100, 0.5);
   color: #17c964;
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 6px 18px;
-  border-radius: 20px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.25s ease;
-  letter-spacing: 0.3px;
+  transition: all 0.22s ease;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .nav-logout:hover {
-  background: rgba(23, 201, 100, 0.12);
+  background: #e8f8ef;
+  border-color: #17c964;
+  color: #0ea050;
+}
+
+/* ─── HAMBURGER BUTTON (mobile only) ───────────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.nav-hamburger:hover {
+  background: #e8f8ef;
+}
+
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #0f1f17;
+  border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
+}
+
+/* Hamburger → X animation */
+.nav-hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ─── MOBILE DRAWER ─────────────────────────────────────────── */
+.navbar-mobile-menu {
+  display: none;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(23, 201, 100, 0.2);
+  padding: 1rem 1.25rem 1.5rem;
+  flex-direction: column;
+  gap: 0.3rem;
+  z-index: 199;
+  animation: slideDown 0.22s ease both;
+  box-shadow: 0 8px 24px rgba(15, 31, 23, 0.1);
+}
+
+.navbar-mobile-menu.open {
+  display: flex;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.navbar-mobile-menu .nav-link {
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  border-radius: 12px;
+  width: 100%;
+}
+
+.navbar-mobile-menu .nav-logout {
+  margin-left: 0;
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+/* ─── RESPONSIVE ────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1.25rem;
+  }
+
+  .navbar-links {
+    display: none; /* hide desktop links */
+  }
+
+  .nav-hamburger {
+    display: flex; /* show hamburger */
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 58px;
+  }
+
+  .navbar-logo {
+    font-size: 1.1rem;
+  }
 }

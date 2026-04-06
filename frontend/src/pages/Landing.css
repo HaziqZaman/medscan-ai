@@ -1,169 +1,218 @@
-/* BACKGROUND ENTIRE PAGE */
+/* ─── LANDING PAGE ──────────────────────────────────────────── */
 .landing-page {
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, #151515, #060606);
-  margin: 0;
-  font-family: sans-serif;
+  background: var(--bg);
+  font-family: "DM Sans", "Segoe UI", sans-serif;
+  padding: 1.5rem;
 }
 
-/* MAIN CARD CONTAINER */
+/* MAIN CARD */
 .landing-container {
-  width: 80%; /* Slightly wider for a better split-screen feel */
+  width: 100%;
   max-width: 1200px;
-  height: 85vh;
-  border-radius: 20px;
+  height: 88vh;
+  border-radius: 24px;
   overflow: hidden;
   background: white;
   display: flex;
   flex-direction: column;
-  position: relative; /* Crucial for making the navbar float on top */
-  box-shadow: 0 40px 90px rgba(0,0,0,0.55);
+  position: relative;
+  box-shadow: 0 24px 64px rgba(15, 31, 23, 0.12);
+  border: 1px solid var(--border);
 }
 
 /* OVERLAY NAVBAR */
 .landing-navbar {
-  position: absolute; /* Floats over the panels */
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 80px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 40px;
+  padding: 0 2.5rem;
   box-sizing: border-box;
-  z-index: 10; /* Keeps it on top of images */
-  background: transparent; /* Removed solid background */
+  z-index: 10;
+  background: transparent;
 }
 
 .logo {
-  font-size: 24px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: white; /* Stays white to show up on the dark green left panel */
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: white; /* shows over dark left panel */
 }
 
 .nav-links {
   display: flex;
-  gap: 28px;
-  font-size: 16px;
-  font-weight: 500;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
-.nav-links a, .nav-links span {
-  color: #111; /* Changed to dark so it shows up on the light right panel */
+.nav-links a,
+.nav-links span {
+  color: #111;
   text-decoration: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.25s ease;
 }
 
-.nav-links a:hover, .nav-links span:hover {
-  color: #14c96c;
+.nav-links a:hover,
+.nav-links span:hover {
+  color: #17c964;
 }
 
-/* PANELS WRAPPER */
+/* PANELS */
 .landing-panels {
   flex: 1;
   display: flex;
   height: 100%;
 }
 
-/* LEFT PANEL */
+/* LEFT PANEL — keep intentional dark brand green */
 .landing-left {
   width: 50%;
-  background: radial-gradient(circle at top, #0A1710, #030806); /* Refined Medical Green */
+  background: linear-gradient(160deg, #0a1f15 0%, #040d08 100%);
   color: white;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  transition: width 0.4s ease; /* Your smooth expansion effect */
+  padding: 2rem;
+  transition: width 0.4s ease;
 }
 
 /* RIGHT PANEL */
 .landing-right {
   width: 50%;
-  background: #F8F9FA; /* Clean off-white */
+  background: #f8fbf9;
   color: #111;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  padding: 2rem;
   transition: width 0.4s ease;
 }
 
-/* PANEL EXPANSION EFFECT */
-.landing-left:hover { width: 55%; }
+/* HOVER EXPAND */
+.landing-left:hover  { width: 55%; }
 .landing-right:hover { width: 55%; }
 
 /* TYPOGRAPHY */
 .panel-title {
-  font-size: 32px;
-  margin-bottom: 5px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  margin-bottom: 0.35rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
 }
 
 .panel-subtitle {
-  font-size: 16px;
-  opacity: 0.7;
-  margin-bottom: 20px;
+  font-size: 0.9rem;
+  opacity: 0.6;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
 }
 
 /* IMAGES */
 .landing-image {
-  width: 280px;
-  height: 280px;
+  width: clamp(160px, 22vw, 280px);
+  height: clamp(160px, 22vw, 280px);
   object-fit: contain;
-  margin: 20px 0 40px 0;
+  margin: 0 0 2rem;
   transition: transform 0.4s ease;
 }
 
 .landing-left:hover .landing-image,
 .landing-right:hover .landing-image {
-  transform: scale(1.08);
+  transform: scale(1.07);
 }
 
-/* PRIMARY BUTTON (Left Side) */
+/* BUTTONS */
 .primary-btn {
-  padding: 14px 40px;
-  border-radius: 40px;
-  border: 1px solid #14c96c;
+  padding: 13px 36px;
+  border-radius: 999px;
+  border: 1.5px solid #17c964;
   background: transparent;
   color: white;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(20, 201, 108, 0.2);
+  transition: all 0.25s ease;
+  letter-spacing: 0.2px;
 }
 
 .primary-btn:hover {
-  background: #14c96c;
-  box-shadow: 0 0 25px rgba(20, 201, 108, 0.5);
-  transform: translateY(-3px);
+  background: #17c964;
+  color: #0a1f15;
+  box-shadow: 0 4px 20px rgba(23, 201, 100, 0.45);
+  transform: translateY(-2px);
 }
 
-/* SECONDARY BUTTON (Right Side) */
 .secondary-btn {
-  padding: 14px 40px;
-  border-radius: 40px;
-  border: 2px solid #14c96c;
+  padding: 13px 36px;
+  border-radius: 999px;
+  border: 1.5px solid #17c964;
   background: transparent;
   color: #111;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .secondary-btn:hover {
-  background: #14c96c;
+  background: #17c964;
   color: white;
-  transform: translateY(-3px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(23, 201, 100, 0.3);
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .landing-page { padding: 0; height: 100svh; }
+
+  .landing-container {
+    border-radius: 0;
+    height: 100svh;
+    box-shadow: none;
+    border: none;
+  }
+
+  .landing-navbar { padding: 0 1.25rem; height: 60px; }
+
+  .landing-panels { flex-direction: column; }
+
+  .landing-left,
+  .landing-right {
+    width: 100% !important; /* override hover expand */
+    flex: 1;
+    padding: 1.25rem;
+  }
+
+  .landing-image {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1rem;
+  }
+
+  .panel-title   { font-size: 1.2rem; }
+  .panel-subtitle { margin-bottom: 0.75rem; }
+
+  .primary-btn,
+  .secondary-btn { padding: 11px 28px; font-size: 0.88rem; }
+}
+
+@media (max-width: 480px) {
+  .landing-image { width: 100px; height: 100px; }
+  .panel-title   { font-size: 1.1rem; }
 }
