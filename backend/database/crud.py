@@ -5,8 +5,9 @@ from database.models import User, AnalysisCase
 from api.schemas import AnalysisCaseCreate
 
 
-def create_user(db: Session, email: str, password_hash: str):
+def create_user(db: Session, name: str, email: str, password_hash: str):
     new_user = User(
+        name = name,
         email=email,
         password_hash=password_hash
     )
@@ -21,6 +22,8 @@ def create_user(db: Session, email: str, password_hash: str):
 def get_user_by_email(db: Session, email: str):
     return db.query(User).filter(User.email == email).first()
 
+def get_user_by_id(db: Session, user_id: int):
+    return db.query(User).filter(User.id == user_id).first()
 
 def create_analysis_case(db: Session, case_data: AnalysisCaseCreate):
     new_case = AnalysisCase(**case_data.model_dump())

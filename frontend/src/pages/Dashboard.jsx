@@ -10,11 +10,27 @@ function Dashboard() {
     avg_confidence: 0,
     recent_analyses: [],
   });
+
+  const [user, setUser] = useState({
+    name: "Student",
+    email: "",
+    role: "",
+  });
+
+  const [now, setNow] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchDashboardSummary = async () => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
         setError("");
@@ -25,36 +41,77 @@ function Dashboard() {
           throw new Error("You are not logged in. Please log in first.");
         }
 
-        const res = await fetch("http://127.0.0.1:8000/cases/dashboard/summary", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const [summaryRes, profileRes] = await Promise.all([
+          fetch("http://127.0.0.1:8000/cases/dashboard/summary", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          fetch("http://127.0.0.1:8000/user/profile", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
 
-        const data = await res.json();
+        const summaryData = await summaryRes.json();
+        const profileData = await profileRes.json();
 
-        if (!res.ok) {
-          throw new Error(data.detail || "Failed to load dashboard summary");
+        if (!summaryRes.ok) {
+          throw new Error(summaryData.detail || "Failed to load dashboard summary");
+        }
+
+        if (!profileRes.ok) {
+          throw new Error(profileData.detail || "Failed to load user profile");
         }
 
         setSummary({
-          total_analyses: data.total_analyses ?? 0,
-          idc_detected: data.idc_detected ?? 0,
-          non_idc: data.non_idc ?? 0,
-          avg_confidence: data.avg_confidence ?? 0,
-          recent_analyses: data.recent_analyses ?? [],
+          total_analyses: summaryData.total_analyses ?? 0,
+          idc_detected: summaryData.idc_detected ?? 0,
+          non_idc: summaryData.non_idc ?? 0,
+          avg_confidence: summaryData.avg_confidence ?? 0,
+          recent_analyses: summaryData.recent_analyses ?? [],
+        });
+
+        setUser({
+          name: profileData.name || "Student",
+          email: profileData.email || "",
+          role: profileData.role || "",
         });
       } catch (err) {
         console.error(err);
-        setError(err.message || "Failed to load dashboard summary");
+        setError(err.message || "Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDashboardSummary();
+    fetchDashboardData();
   }, []);
+
+  const hour = now.getHours();
+
+  let greeting = "Good evening";
+  if (hour < 12) {
+    greeting = "Good morning";
+  } else if (hour < 18) {
+    greeting = "Good afternoon";
+  }
+
+  const liveDate = now.toLocaleDateString([], {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  const liveTime = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
 
   const stats = [
     { icon: "🔬", value: summary.total_analyses, label: "Total Analyses" },
@@ -95,11 +152,15 @@ function Dashboard() {
         <div className="dash-header">
           <div>
             <h1>
-              Good morning, <span>Student</span>
+              {greeting}, <span>{user.name}</span>
             </h1>
             <p>Here's your MedScan AI overview</p>
           </div>
-          <div className="dash-date">March 2026</div>
+
+          <div className="dash-date">
+            <div>{liveDate}</div>
+            <div>{liveTime}</div>
+          </div>
         </div>
 
         {error && (

@@ -32,7 +32,7 @@ function Login() {
         alert("Login successful");
 
         // Redirect to landing/dashboard
-        navigate("/landing");
+        window.location.href = "/landing";
 
       } else {
         alert(data.detail || "Login failed");
@@ -51,7 +51,7 @@ function Login() {
       <div className="login-left">
         <div className="login-brand">MedScan <span>AI</span></div>
 
-        <h1>Learn how AI<br />reads <span>cancer</span><br />tissue.</h1>
+        <h1>Learn about cancer<br />with <span>help</span><br />of Artificial Intelligence</h1>
 
         <p>
           An educational platform for medical students and trainees to understand
@@ -61,9 +61,10 @@ function Login() {
         <div className="login-tags">
           {[
             "IDC Breast Cancer Detection",
-            "Tumor Grading with ResNet-18",
-            "Grad-CAM Visual Explanations",
-            "Educational Use Only",
+            "Cancer Cells Grading",
+            "LVI Tissues Analysis",
+            "RAG based Chatbot for Medical Queries",
+            "Educational Use Only(Non-Clinical Tool)",
           ].map((tag) => (
             <div className="login-tag" key={tag}>
               <div className="login-tag-dot" />
@@ -98,7 +99,7 @@ function Login() {
             <input
               type="password"
               name="password"
-              placeholder="••••••••"
+              placeholder="********"
               value={form.password}
               onChange={handleChange}
             />

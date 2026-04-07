@@ -16,7 +16,13 @@ function Landing() {
           </div>
           <div className="nav-links">
             <Link to="/dashboard">Dashboard</Link>
-            <span>Logout</span>
+            <span onClick={() => {
+              localStorage.removeItem("token");
+              localStorage.removeItem("user");
+              window.location.replace("/");
+            }}>
+              Logout
+            </span>
           </div>
         </div>
 

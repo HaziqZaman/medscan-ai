@@ -16,6 +16,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # ----------- Request Schemas -----------
 
 class RegisterRequest(BaseModel):
+    name: str
     email: str
     password: str
 
@@ -47,7 +48,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
 
     hashed_password = hash_password(data.password)
 
-    user = crud.create_user(db, email=data.email, password_hash=hashed_password)
+    user = crud.create_user(db, name=data.name, email=data.email, password_hash=hashed_password)
 
     return {
         "message": "User registered successfully",
@@ -80,14 +81,3 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         "token_type": "bearer"
     }
 
-
-# ----------- Profile -----------
-
-@router.get("/profile")
-def profile(current_user = Depends(get_current_user)):
-
-    return {
-        "user_id": current_user.id,
-        "email": current_user.email,
-        "role": current_user.role
-    }

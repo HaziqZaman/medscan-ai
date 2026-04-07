@@ -3,13 +3,22 @@ import { Link, useNavigate } from "react-router-dom";
 import "./Login.css";
 
 function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirm: ""
+  });
   const navigate = useNavigate();
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleRegister = async () => {
+    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.confirm.trim()) {
+      alert("Please fill in all fields");
+      return;
+    }
 
     if (form.password !== form.confirm) {
       alert("Passwords do not match");
@@ -23,7 +32,8 @@ function Register() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          email: form.email,
+          name: form.name.trim(),
+          email: form.email.trim(),
           password: form.password
         })
       });
@@ -34,9 +44,16 @@ function Register() {
         alert("Registration successful");
         navigate("/");
       } else {
-        alert(data.detail || "Registration failed");
-      }
+        let message = "Registration failed";
 
+        if (typeof data.detail === "string") {
+          message = data.detail;
+        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
+          message = data.detail[0]?.msg || message;
+        }
+
+        alert(message);
+      }
     } catch (error) {
       console.error(error);
       alert("Server connection error");
@@ -49,9 +66,18 @@ function Register() {
       <div className="login-left">
         <div className="login-brand">MedScan <span>AI</span></div>
         <h1>Join the<br /><span>future</span> of<br />pathology.</h1>
-        <p>Create your account and start exploring AI-powered breast cancer histopathology analysis.</p>
+        <p>
+          Create your account and start exploring AI-powered breast cancer
+          histopathology analysis.
+        </p>
+
         <div className="login-tags">
-          {["IDC Breast Cancer Detection","Tumor Grading with ResNet-18","Grad-CAM Visual Explanations","Educational Use Only"].map((t) => (
+          {[
+            "IDC Breast Cancer Detection",
+            "Tumor Grading with ResNet-18",
+            "Grad-CAM Visual Explanations",
+            "Educational Use Only"
+          ].map((t) => (
             <div className="login-tag" key={t}>
               <div className="login-tag-dot" />
               <span>{t}</span>
