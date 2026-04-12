@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional, Any
+from typing import Optional, Any, List, Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AnalysisCaseBase(BaseModel):
@@ -26,3 +26,55 @@ class AnalysisCaseResponse(AnalysisCaseBase):
 
     class Config:
         from_attributes = True
+
+
+# -----------------------------
+# CHATBOT SCHEMAS
+# -----------------------------
+
+class ChatQueryRequest(BaseModel):
+    message: str
+    session_id: Optional[int] = None
+    case_id: Optional[int] = None
+    use_latest_case: bool = False
+
+
+class ChatQueryResponse(BaseModel):
+    answer: str
+    session_id: int
+    sources: List[Dict[str, Any]] = Field(default_factory=list)
+    used_case_summary: Optional[str] = None
+
+
+class ChatSessionResponse(BaseModel):
+    id: int
+    title: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChatMessageResponse(BaseModel):
+    id: int
+    session_id: int
+    role: str
+    content: str
+    related_case_id: Optional[int] = None
+    sources_json: Optional[Any] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class ChatHistoryResponse(BaseModel):
+    session_id: int
+    title: str
+    messages: List[ChatMessageResponse] = Field(default_factory=list)
+
+
+class ExplainLatestCaseRequest(BaseModel):
+    session_id: Optional[int] = None
+    message: str = "Explain my latest case in simple educational terms."
