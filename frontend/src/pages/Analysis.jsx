@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import "./Analysis.css";
 
@@ -57,12 +58,11 @@ function formatValue(val) {
   return String(val);
 }
 
-// ─── Model Switcher ───────────────────────────────────────────────────────────
+// ─── Model Switcher (Updated: Model C Removed) ────────────────────────────────
 function ModelSwitcher({ active, onChange }) {
   const models = [
     { id: "model_a", label: "Model A", sub: "IDC Detection" },
     { id: "model_b", label: "Model B", sub: "Grading Support" },
-    { id: "model_c", label: "Model C", sub: "Lymph Node", disabled: false, soon: true },
   ];
 
   return (
@@ -70,13 +70,11 @@ function ModelSwitcher({ active, onChange }) {
       {models.map((m) => (
         <button
           key={m.id}
-          className={`model-tab ${active === m.id ? "active" : ""} ${m.disabled ? "disabled" : ""}`}
-          onClick={() => !m.disabled && onChange(m.id)}
-          disabled={m.disabled}
+          className={`model-tab ${active === m.id ? "active" : ""}`}
+          onClick={() => onChange(m.id)}
         >
           <span className="tab-label">{m.label}</span>
           <span className="tab-sub">{m.sub}</span>
-          {m.soon && <span className="tab-badge">Soon</span>}
         </button>
       ))}
     </div>
@@ -206,21 +204,26 @@ function ModelASection() {
   const [loadingStage, setLoadingStage] = useState("");
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [done, setDone] = useState(false);
 
   const handleFile = (f, dataUrl) => {
     setFile(f);
     setPreview(dataUrl);
     setResult(null);
     setError(null);
+    setDone(false);
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (!file || loading) return;
 
     setLoading(true);
     setLoadingStage("Uploading image...");
     setResult(null);
     setError(null);
+    setDone(false);
+
+    const toastId = toast.loading("Starting Model A analysis...");
 
     try {
       const token = localStorage.getItem("token");
@@ -251,8 +254,14 @@ function ModelASection() {
         overlay: data.overlay,
         heatmap: data.heatmap,
       });
+
+      setDone(true);
+      toast.success("Model A analysis completed", { id: toastId });
+      setTimeout(() => setDone(false), 1800);
     } catch (err) {
-      setError(err.message || "Analysis failed");
+      const message = err.message || "Analysis failed";
+      setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
       setLoadingStage("");
@@ -278,10 +287,18 @@ function ModelASection() {
 
       {error && <div className="error-message">{error}</div>}
 
-      <button className="analyze-btn" onClick={handleAnalyze} disabled={!file || loading}>
+      <button
+        className={`analyze-btn ${done ? "is-success" : ""}`}
+        onClick={handleAnalyze}
+        disabled={!file || loading}
+      >
         {loading ? (
           <>
             <span className="btn-spinner" /> {loadingStage || "Analyzing Model A..."}
+          </>
+        ) : done ? (
+          <>
+            <span className="btn-check">✓</span> Completed
           </>
         ) : (
           "Analyze with Model A"
@@ -368,13 +385,17 @@ function ModelBSection() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [done, setDone] = useState(false);
 
   const handleAnalyze = async () => {
-    if (!b1File || !b2File) return;
+    if (!b1File || !b2File || loading) return;
 
     setLoading(true);
     setResult(null);
     setError(null);
+    setDone(false);
+
+    const toastId = toast.loading("Starting Model B analysis...");
 
     try {
       const token = localStorage.getItem("token");
@@ -394,8 +415,13 @@ function ModelBSection() {
       if (!res.ok) throw new Error(data.detail || "Model B analysis failed");
 
       setResult(data);
+      setDone(true);
+      toast.success("Model B analysis completed", { id: toastId });
+      setTimeout(() => setDone(false), 1800);
     } catch (err) {
-      setError(err.message || "Analysis failed");
+      const message = err.message || "Analysis failed";
+      setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -419,6 +445,7 @@ function ModelBSection() {
             setB1Preview(url);
             setResult(null);
             setError(null);
+            setDone(false);
           }}
         />
         <UploadCard
@@ -431,6 +458,7 @@ function ModelBSection() {
             setB2Preview(url);
             setResult(null);
             setError(null);
+            setDone(false);
           }}
         />
       </div>
@@ -438,13 +466,17 @@ function ModelBSection() {
       {error && <div className="error-message">{error}</div>}
 
       <button
-        className="analyze-btn"
+        className={`analyze-btn ${done ? "is-success" : ""}`}
         onClick={handleAnalyze}
         disabled={!b1File || !b2File || loading}
       >
         {loading ? (
           <>
             <span className="btn-spinner" /> Analyzing Model B...
+          </>
+        ) : done ? (
+          <>
+            <span className="btn-check">✓</span> Completed
           </>
         ) : (
           "Analyze with Model B"
@@ -531,24 +563,7 @@ function ModelBSection() {
   );
 }
 
-// ─── Model C Section ──────────────────────────────────────────────────────────
-function ModelCSection() {
-  return (
-    <div className="analysis-panel">
-      <div className="model-c-card">
-        <div className="coming-soon-icon">🧬</div>
-        <div className="coming-soon-title">Coming Soon</div>
-        <div className="coming-soon-text">
-          Model C integration is planned for the final phase.
-          <br />
-          It will support lymph node metastasis detection using the PatchCamelyon (PCam) dataset.
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// ─── Main Page (Updated: Model C Logic Removed) ───────────────────────────────
 function Analysis() {
   const [activeModel, setActiveModel] = useState("model_a");
 
@@ -569,7 +584,6 @@ function Analysis() {
 
         {activeModel === "model_a" && <ModelASection />}
         {activeModel === "model_b" && <ModelBSection />}
-        {activeModel === "model_c" && <ModelCSection />}
       </div>
     </div>
   );

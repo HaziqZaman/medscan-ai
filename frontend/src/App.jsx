@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -7,13 +8,17 @@ import Dashboard from "./pages/Dashboard";
 import Analysis from "./pages/Analysis";
 import CaseHistory from "./pages/CaseHistory";
 import KnowledgeCenter from "./pages/KnowledgeCenter";
-import Chatbot from "./pages/Chatbot";
+import Chatbot from "./pages/chatbot";
 import Register from "./pages/Register";
 import About from "./pages/About";
 
 function ProtectedRoute({ children, isAuthenticated, checkingAuth }) {
   if (checkingAuth) {
-    return <div style={{ padding: "2rem", textAlign: "center" }}>Checking session...</div>;
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        Checking session...
+      </div>
+    );
   }
 
   return isAuthenticated ? children : <Navigate to="/" replace />;
@@ -21,7 +26,11 @@ function ProtectedRoute({ children, isAuthenticated, checkingAuth }) {
 
 function PublicRoute({ children, isAuthenticated, checkingAuth }) {
   if (checkingAuth) {
-    return <div style={{ padding: "2rem", textAlign: "center" }}>Checking session...</div>;
+    return (
+      <div style={{ padding: "2rem", textAlign: "center" }}>
+        Checking session...
+      </div>
+    );
   }
 
   return isAuthenticated ? <Navigate to="/landing" replace /> : children;
@@ -51,6 +60,7 @@ function App() {
 
         if (!response.ok) {
           localStorage.removeItem("token");
+          localStorage.removeItem("user");
           setIsAuthenticated(false);
         } else {
           setIsAuthenticated(true);
@@ -58,6 +68,7 @@ function App() {
       } catch (error) {
         console.error("Session validation failed:", error);
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         setIsAuthenticated(false);
       } finally {
         setCheckingAuth(false);
@@ -69,6 +80,34 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: "#ffffff",
+            color: "#173428",
+            border: "1px solid #dcebe3",
+            borderRadius: "12px",
+            boxShadow: "0 10px 30px rgba(15, 31, 23, 0.08)",
+            fontSize: "0.9rem",
+            fontWeight: "500",
+          },
+          success: {
+            iconTheme: {
+              primary: "#159957",
+              secondary: "#ffffff",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#c83b3b",
+              secondary: "#ffffff",
+            },
+          },
+        }}
+      />
+
       <Routes>
         <Route
           path="/"

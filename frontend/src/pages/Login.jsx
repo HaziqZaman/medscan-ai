@@ -1,57 +1,90 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import "./Login.css";
 
 function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleChange = (e) => {
+    if (isSubmitting || isSuccess) return;
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleLogin = async () => {
+    if (isSubmitting || isSuccess) return;
+
+    const email = form.email.trim();
+    const password = form.password;
+
+    if (!email || !password) {
+      toast.error("Please enter email and password");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const toastId = toast.loading("Signing you in...");
+
     try {
       const response = await fetch("http://127.0.0.1:8000/auth/login", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: form.email,
-          password: form.password
-        })
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Save JWT token
         localStorage.setItem("token", data.access_token);
 
-        alert("Login successful");
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
 
-        // Redirect to landing/dashboard
-        window.location.href = "/landing";
+        setIsSuccess(true);
+        toast.success("Login successful", { id: toastId });
 
+        setTimeout(() => {
+          window.location.replace("/landing");
+        }, 700);
       } else {
-        alert(data.detail || "Login failed");
+        setIsSubmitting(false);
+        toast.error(data.detail || "Login failed", { id: toastId });
       }
-
     } catch (error) {
       console.error(error);
-      alert("Server connection error");
+      setIsSubmitting(false);
+      toast.error("Server connection error", { id: toastId });
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
     }
   };
 
   return (
     <div className="login-page">
-
-      {/* LEFT */}
       <div className="login-left">
-        <div className="login-brand">MedScan <span>AI</span></div>
+        <div className="login-brand">
+          MedScan <span>AI</span>
+        </div>
 
-        <h1>Learn about cancer<br />with <span>help</span><br />of Artificial Intelligence</h1>
+        <h1>
+          Learn about cancer
+          <br />
+          with <span>help</span>
+          <br />
+          of Artificial Intelligence
+        </h1>
 
         <p>
           An educational platform for medical students and trainees to understand
@@ -64,7 +97,7 @@ function Login() {
             "Cancer Cells Grading",
             "A dedicated knowledge center for histopathology",
             "RAG based Chatbot for Medical Queries",
-            "Educational Use Only(Non-Clinical Tool)",
+            "Educational Use Only (Non-Clinical Tool)",
           ].map((tag) => (
             <div className="login-tag" key={tag}>
               <div className="login-tag-dot" />
@@ -74,10 +107,8 @@ function Login() {
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="login-right">
         <div className="login-form-container">
-
           <div className="login-edu-badge">Educational Platform</div>
 
           <h2>Welcome back</h2>
@@ -91,6 +122,8 @@ function Login() {
               placeholder="student@university.edu"
               value={form.email}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
@@ -102,23 +135,38 @@ function Login() {
               placeholder="********"
               value={form.password}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
-          <button className="login-btn" onClick={handleLogin}>
-            Sign In
+          <button
+            className={`login-btn ${isSuccess ? "is-success" : ""}`}
+            onClick={handleLogin}
+            disabled={isSubmitting || isSuccess}
+          >
+            {isSubmitting && !isSuccess ? (
+              <span className="btn-content">
+                <span className="btn-spinner" />
+                <span>Signing In...</span>
+              </span>
+            ) : isSuccess ? (
+              <span className="btn-content">
+                <span className="btn-check">✓</span>
+                <span>Success</span>
+              </span>
+            ) : (
+              <span className="btn-content">Sign In</span>
+            )}
           </button>
 
           <div className="login-divider">or</div>
 
           <div className="login-register">
-            Don't have an account?{" "}
-            <Link to="/register">Register here</Link>
+            Don't have an account? <Link to="/register">Register here</Link>
           </div>
-
         </div>
       </div>
-
     </div>
   );
 }

@@ -7,6 +7,10 @@ from database.models import User, AnalysisCase, ChatSession, ChatMessage
 from api.schemas import AnalysisCaseCreate
 
 
+# -----------------------------
+# USER CRUD
+# -----------------------------
+
 def create_user(db: Session, name: str, email: str, password_hash: str):
     new_user = User(
         name=name,
@@ -28,6 +32,10 @@ def get_user_by_email(db: Session, email: str):
 def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
+
+# -----------------------------
+# ANALYSIS CASE CRUD
+# -----------------------------
 
 def create_analysis_case(db: Session, case_data: AnalysisCaseCreate):
     new_case = AnalysisCase(**case_data.model_dump())
@@ -66,6 +74,40 @@ def get_latest_analysis_case_by_user(db: Session, user_id: int):
         .order_by(AnalysisCase.created_at.desc())
         .first()
     )
+
+
+def delete_analysis_case_by_id_and_user(db: Session, case_id: int, user_id: int) -> bool:
+    case = (
+        db.query(AnalysisCase)
+        .filter(
+            AnalysisCase.id == case_id,
+            AnalysisCase.user_id == user_id,
+        )
+        .first()
+    )
+
+    if not case:
+        return False
+
+    db.delete(case)
+    db.commit()
+    return True
+
+
+def delete_all_analysis_cases_by_user(db: Session, user_id: int) -> int:
+    cases = (
+        db.query(AnalysisCase)
+        .filter(AnalysisCase.user_id == user_id)
+        .all()
+    )
+
+    deleted_count = 0
+    for case in cases:
+        db.delete(case)
+        deleted_count += 1
+
+    db.commit()
+    return deleted_count
 
 
 def get_dashboard_summary_by_user(db: Session, user_id: int):
@@ -120,6 +162,43 @@ def get_dashboard_summary_by_user(db: Session, user_id: int):
     }
 
 
+def build_case_summary(case: AnalysisCase | None) -> str | None:
+    if not case:
+        return None
+
+    extra_data = case.extra_data or {}
+
+    def safe(value, fallback="N/A"):
+        return value if value not in (None, "", []) else fallback
+
+    lines = [
+        f"Case ID: {case.id}",
+        f"Model: {safe(case.model_type)}",
+        f"Result: {safe(case.prediction_label)}",
+        f"Confidence: {safe(case.confidence)}",
+    ]
+
+    if case.model_type == "model_a":
+        if extra_data.get("note"):
+            lines.append(f"Note: {extra_data.get('note')}")
+
+    elif case.model_type == "model_b":
+        combined = extra_data.get("combined_result", {}) or {}
+        b1 = (extra_data.get("b1_result", {}) or {}).get("findings", {}) or {}
+        b2 = (extra_data.get("b2_result", {}) or {}).get("findings", {}) or {}
+
+        if combined.get("grade_support"):
+            lines.append(f"Grade Support: {combined.get('grade_support')}")
+
+        if b1.get("nuclei_density"):
+            lines.append(f"Nuclei Density: {b1.get('nuclei_density')}")
+
+        if b2.get("mitotic_activity_level"):
+            lines.append(f"Mitotic Activity: {b2.get('mitotic_activity_level')}")
+
+    return "\n".join(lines)
+
+
 # -----------------------------
 # CHATBOT CRUD
 # -----------------------------
@@ -157,6 +236,8 @@ def get_chat_sessions_by_user(db: Session, user_id: int, skip: int = 0, limit: i
         .limit(limit)
         .all()
     )
+
+
 def delete_chat_session_by_id_and_user(db: Session, session_id: int, user_id: int) -> bool:
     session = (
         db.query(ChatSession)
@@ -190,6 +271,22 @@ def delete_recent_chat_sessions_by_user(
 
     deleted_count = 0
     for session in recent_sessions:
+        db.delete(session)
+        deleted_count += 1
+
+    db.commit()
+    return deleted_count
+
+
+def delete_all_chat_sessions_by_user(db: Session, user_id: int) -> int:
+    sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .all()
+    )
+
+    deleted_count = 0
+    for session in sessions:
         db.delete(session)
         deleted_count += 1
 
@@ -279,101 +376,3 @@ def generate_chat_title_from_message(message: str) -> str:
         return cleaned
 
     return cleaned[:40].rstrip() + "..."
-
-
-def build_case_summary(case: AnalysisCase | None) -> str | None:
-    if not case:
-        return None
-
-    extra_data = case.extra_data or {}
-
-    def safe(value, fallback="N/A"):
-        return value if value not in (None, "", []) else fallback
-
-    lines = [
-        f"Case ID: {case.id}",
-        f"Model: {safe(case.model_type)}",
-        f"Result: {safe(case.prediction_label)}",
-        f"Confidence: {safe(case.confidence)}",
-    ]
-
-    if case.model_type == "model_a":
-        if extra_data.get("note"):
-            lines.append(f"Note: {extra_data.get('note')}")
-
-    elif case.model_type == "model_b":
-        combined = extra_data.get("combined_result", {}) or {}
-        b1 = (extra_data.get("b1_result", {}) or {}).get("findings", {}) or {}
-        b2 = (extra_data.get("b2_result", {}) or {}).get("findings", {}) or {}
-
-        if combined.get("grade_support"):
-            lines.append(f"Grade Support: {combined.get('grade_support')}")
-
-        if b1.get("nuclei_density"):
-            lines.append(f"Nuclei Density: {b1.get('nuclei_density')}")
-
-        if b2.get("mitotic_activity_level"):
-            lines.append(f"Mitotic Activity: {b2.get('mitotic_activity_level')}")
-
-    return "\n".join(lines)
-def delete_all_chat_sessions_by_user(db: Session, user_id: int) -> int:
-    sessions = (
-        db.query(ChatSession)
-        .filter(ChatSession.user_id == user_id)
-        .all()
-    )
-
-    deleted_count = 0
-    for session in sessions:
-        db.delete(session)
-        deleted_count += 1
-
-    db.commit()
-    return deleted_count
-    if not case:
-        return None
-
-    extra_data = case.extra_data or {}
-
-    lines = [
-        f"Case ID: {case.id}",
-        f"Model Type: {case.model_type}",
-        f"Prediction: {case.prediction_label or 'N/A'}",
-        f"Confidence: {case.confidence if case.confidence is not None else 'N/A'}",
-        f"Inference Time: {case.inference_time if case.inference_time is not None else 'N/A'}",
-        f"Result Status: {case.result_status}",
-        f"Created At: {case.created_at}",
-    ]
-
-    if case.heatmap_path:
-        lines.append("Heatmap: Available")
-
-    if case.model_type == "model_a":
-        if extra_data.get("original_filename"):
-            lines.append(f"Original File: {extra_data.get('original_filename')}")
-        if extra_data.get("note"):
-            lines.append(f"Note: {extra_data.get('note')}")
-
-    elif case.model_type == "model_b":
-        combined = extra_data.get("combined_result", {}) or {}
-        b1 = (extra_data.get("b1_result", {}) or {}).get("findings", {}) or {}
-        b2 = (extra_data.get("b2_result", {}) or {}).get("findings", {}) or {}
-
-        if combined.get("grade_support"):
-            lines.append(f"Grade Support: {combined.get('grade_support')}")
-        if combined.get("summary"):
-            lines.append(f"Combined Summary: {combined.get('summary')}")
-
-        if b1.get("nuclei_count") is not None:
-            lines.append(f"B1 Nuclei Count: {b1.get('nuclei_count')}")
-        if b1.get("nuclei_density"):
-            lines.append(f"B1 Nuclei Density: {b1.get('nuclei_density')}")
-        if b1.get("irregularity_score") is not None:
-            lines.append(f"B1 Irregularity Score: {b1.get('irregularity_score')}")
-
-        if b2.get("predicted_mitosis_count") is not None:
-            lines.append(f"B2 Predicted Mitosis Count: {b2.get('predicted_mitosis_count')}")
-        if b2.get("mitotic_activity_level"):
-            lines.append(f"B2 Mitotic Activity Level: {b2.get('mitotic_activity_level')}")
-
-    return "\n".join(lines)

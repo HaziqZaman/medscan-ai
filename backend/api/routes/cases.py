@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -9,6 +9,8 @@ from database.crud import (
     get_analysis_cases_by_user,
     get_analysis_case_by_id_and_user,
     get_dashboard_summary_by_user,
+    delete_analysis_case_by_id_and_user,
+    delete_all_analysis_cases_by_user,
 )
 from api.schemas import AnalysisCaseResponse
 
@@ -55,6 +57,19 @@ def dashboard_summary(
     }
 
 
+@router.delete("/clear-all", response_model=Dict[str, int])
+def clear_all_cases(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    deleted_count = delete_all_analysis_cases_by_user(
+        db=db,
+        user_id=current_user.id,
+    )
+
+    return {"deleted_count": deleted_count}
+
+
 @router.get("/{case_id}", response_model=AnalysisCaseResponse)
 def get_case_by_id(
     case_id: int,
@@ -67,3 +82,21 @@ def get_case_by_id(
         raise HTTPException(status_code=404, detail="Case not found")
 
     return case
+
+
+@router.delete("/{case_id}", response_model=Dict[str, str])
+def delete_case_by_id(
+    case_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    deleted = delete_analysis_case_by_id_and_user(
+        db=db,
+        case_id=case_id,
+        user_id=current_user.id,
+    )
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Case not found")
+
+    return {"detail": "Case deleted successfully"}

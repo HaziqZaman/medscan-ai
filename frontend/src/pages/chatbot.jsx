@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import {
   explainLatestCase,
@@ -82,11 +83,7 @@ function MessageBubble({ message }) {
     <div className={`chatbot-message-row ${isUser ? "user" : "assistant"}`}>
       <div className={`chatbot-message-bubble ${isUser ? "user" : "assistant"}`}>
         <div className="chatbot-message-text">
-          {isUser ? (
-            message.content
-          ) : (
-            <ReactMarkdown>{message.content}</ReactMarkdown>
-          )}
+          {isUser ? message.content : <ReactMarkdown>{message.content}</ReactMarkdown>}
         </div>
 
         {!isUser && message.used_case_summary ? (
@@ -125,8 +122,15 @@ function Chatbot() {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [explaining, setExplaining] = useState(false);
+  const [deletingSessionId, setDeletingSessionId] = useState(null);
+  const [deletingRecent, setDeletingRecent] = useState(false);
   const [error, setError] = useState("");
+  const [confirmState, setConfirmState] = useState({
+    open: false,
+    mode: null,
+    sessionId: null,
+  });
 
   const messagesEndRef = useRef(null);
 
@@ -136,7 +140,7 @@ function Chatbot() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, sending]);
+  }, [messages, sending, explaining]);
 
   async function loadSessions() {
     try {
@@ -146,7 +150,9 @@ function Chatbot() {
       const data = await getChatSessions();
       setSessions(Array.isArray(data) ? data : []);
     } catch (err) {
-      setError(err.message || "Failed to load chat history.");
+      const message = err.message || "Failed to load chat history.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoadingSessions(false);
     }
@@ -156,6 +162,8 @@ function Chatbot() {
     try {
       setLoadingMessages(true);
       setError("");
+
+      const toastId = toast.loading("Opening chat session...");
       setActiveSessionId(sessionId);
 
       const data = await getChatSessionMessages(sessionId);
@@ -179,8 +187,12 @@ function Chatbot() {
               },
             ]
       );
+
+      toast.success("Session opened", { id: toastId });
     } catch (err) {
-      setError(err.message || "Failed to load session messages.");
+      const message = err.message || "Failed to load session messages.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoadingMessages(false);
     }
@@ -200,11 +212,12 @@ function Chatbot() {
     ]);
     setError("");
     setInput("");
+    toast.success("New chat started");
   }
 
   async function handleSend() {
     const trimmed = input.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending || explaining) return;
 
     const optimisticUserMessage = {
       id: `user-${Date.now()}`,
@@ -217,6 +230,8 @@ function Chatbot() {
     setInput("");
     setSending(true);
     setError("");
+
+    const toastId = toast.loading("Getting chatbot response...");
 
     try {
       const result = await queryChatbot({
@@ -241,13 +256,18 @@ function Chatbot() {
       }
 
       await loadSessions();
+      toast.success("Response received", { id: toastId });
     } catch (err) {
+      const message = err.message || "Failed to get chatbot response.";
+      setError(message);
+      toast.error(message, { id: toastId });
+
       setMessages((prev) => [
         ...prev,
         {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
-          content: err.message || "Failed to get chatbot response.",
+          content: message,
           sources: [],
           created_at: new Date().toISOString(),
         },
@@ -258,9 +278,9 @@ function Chatbot() {
   }
 
   async function handleExplainLatestCase() {
-    if (sending) return;
+    if (sending || explaining) return;
 
-    setSending(true);
+    setExplaining(true);
     setError("");
 
     const optimisticUserMessage = {
@@ -271,6 +291,8 @@ function Chatbot() {
     };
 
     setMessages((prev) => [...prev, optimisticUserMessage]);
+
+    const toastId = toast.loading("Explaining latest case...");
 
     try {
       const result = await explainLatestCase(activeSessionId);
@@ -291,31 +313,63 @@ function Chatbot() {
       }
 
       await loadSessions();
+      toast.success("Latest case explained", { id: toastId });
     } catch (err) {
+      const message = err.message || "Failed to explain latest case.";
+      setError(message);
+      toast.error(message, { id: toastId });
+
       setMessages((prev) => [
         ...prev,
         {
           id: `assistant-case-error-${Date.now()}`,
           role: "assistant",
-          content: err.message || "Failed to explain latest case.",
+          content: message,
           sources: [],
           created_at: new Date().toISOString(),
         },
       ]);
     } finally {
-      setSending(false);
+      setExplaining(false);
     }
   }
 
-  async function handleDeleteSession(sessionId, event) {
+  function openDeleteSessionConfirm(sessionId, event) {
     event.stopPropagation();
 
-    const confirmed = window.confirm("Delete this chat session?");
-    if (!confirmed) return;
+    if (deletingRecent || deletingSessionId) return;
 
+    setConfirmState({
+      open: true,
+      mode: "single",
+      sessionId,
+    });
+  }
+
+  function openDeleteRecentConfirm() {
+    if (deletingRecent || deletingSessionId || visibleSessions.length === 0) return;
+
+    setConfirmState({
+      open: true,
+      mode: "recent",
+      sessionId: null,
+    });
+  }
+
+  function closeConfirmModal() {
+    setConfirmState({
+      open: false,
+      mode: null,
+      sessionId: null,
+    });
+  }
+
+  async function deleteSingleSession(sessionId) {
     try {
-      setDeleting(true);
+      setDeletingSessionId(sessionId);
       setError("");
+
+      const toastId = toast.loading("Deleting chat session...");
 
       await deleteChatSession(sessionId);
 
@@ -336,20 +390,23 @@ function Chatbot() {
           },
         ]);
       }
+
+      toast.success("Chat session deleted", { id: toastId });
     } catch (err) {
-      setError(err.message || "Failed to delete chat session.");
+      const message = err.message || "Failed to delete chat session.";
+      setError(message);
+      toast.error(message);
     } finally {
-      setDeleting(false);
+      setDeletingSessionId(null);
     }
   }
 
-  async function handleDeleteRecentChats() {
-    const confirmed = window.confirm("Delete the 5 most recent chat sessions?");
-    if (!confirmed) return;
-
+  async function deleteRecentFiveChats() {
     try {
-      setDeleting(true);
+      setDeletingRecent(true);
       setError("");
+
+      const toastId = toast.loading("Deleting recent chats...");
 
       await deleteRecentChats(5);
       setActiveSessionId(null);
@@ -365,10 +422,27 @@ function Chatbot() {
       ]);
 
       await loadSessions();
+      toast.success("Recent chats deleted", { id: toastId });
     } catch (err) {
-      setError(err.message || "Failed to delete recent chats.");
+      const message = err.message || "Failed to delete recent chats.";
+      setError(message);
+      toast.error(message);
     } finally {
-      setDeleting(false);
+      setDeletingRecent(false);
+    }
+  }
+
+  async function handleConfirmDelete() {
+    const { mode, sessionId } = confirmState;
+    closeConfirmModal();
+
+    if (mode === "single" && sessionId) {
+      await deleteSingleSession(sessionId);
+      return;
+    }
+
+    if (mode === "recent") {
+      await deleteRecentFiveChats();
     }
   }
 
@@ -399,12 +473,25 @@ function Chatbot() {
               <button className="chatbot-new-btn" onClick={startNewChat}>
                 + New Chat
               </button>
+
               <button
                 className="chatbot-delete-recent-btn"
-                onClick={handleDeleteRecentChats}
-                disabled={deleting || loadingSessions || visibleSessions.length === 0}
+                onClick={openDeleteRecentConfirm}
+                disabled={
+                  deletingRecent ||
+                  loadingSessions ||
+                  visibleSessions.length === 0 ||
+                  deletingSessionId !== null
+                }
               >
-                Delete Recent
+                {deletingRecent ? (
+                  <span className="chatbot-btn-inline">
+                    <span className="chatbot-btn-spinner chatbot-btn-spinner-danger" />
+                    Deleting...
+                  </span>
+                ) : (
+                  "Delete Recent"
+                )}
               </button>
             </div>
           </div>
@@ -425,6 +512,7 @@ function Chatbot() {
                   <button
                     className="chatbot-session-open"
                     onClick={() => openSession(session.id)}
+                    disabled={deletingRecent || deletingSessionId !== null}
                   >
                     <div className="chatbot-session-title">{session.title}</div>
                     <div className="chatbot-session-time">
@@ -434,11 +522,18 @@ function Chatbot() {
 
                   <button
                     className="chatbot-session-delete"
-                    onClick={(event) => handleDeleteSession(session.id, event)}
-                    disabled={deleting}
+                    onClick={(event) => openDeleteSessionConfirm(session.id, event)}
+                    disabled={deletingRecent || deletingSessionId !== null}
                     title="Delete this chat"
                   >
-                    Delete
+                    {deletingSessionId === session.id ? (
+                      <span className="chatbot-btn-inline">
+                        <span className="chatbot-btn-spinner chatbot-btn-spinner-danger" />
+                        Deleting...
+                      </span>
+                    ) : (
+                      "Delete"
+                    )}
                   </button>
                 </div>
               ))}
@@ -459,9 +554,16 @@ function Chatbot() {
             <button
               className="chatbot-case-btn"
               onClick={handleExplainLatestCase}
-              disabled={sending}
+              disabled={sending || explaining}
             >
-              Explain Latest Case
+              {explaining ? (
+                <span className="chatbot-btn-inline">
+                  <span className="chatbot-btn-spinner" />
+                  Explaining...
+                </span>
+              ) : (
+                "Explain Latest Case"
+              )}
             </button>
           </div>
 
@@ -476,10 +578,12 @@ function Chatbot() {
               ))
             )}
 
-            {sending ? (
+            {sending || explaining ? (
               <div className="chatbot-message-row assistant">
                 <div className="chatbot-message-bubble assistant">
-                  <div className="chatbot-typing">Thinking...</div>
+                  <div className="chatbot-typing">
+                    {explaining ? "Explaining latest case..." : "Thinking..."}
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -495,7 +599,7 @@ function Chatbot() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={sending}
+              disabled={sending || explaining}
             />
 
             <div className="chatbot-input-actions">
@@ -506,14 +610,60 @@ function Chatbot() {
               <button
                 className="chatbot-send-btn"
                 onClick={handleSend}
-                disabled={sending || !input.trim()}
+                disabled={sending || explaining || !input.trim()}
               >
-                Send
+                {sending ? (
+                  <span className="chatbot-btn-inline">
+                    <span className="chatbot-btn-spinner" />
+                    Sending...
+                  </span>
+                ) : (
+                  "Send"
+                )}
               </button>
             </div>
           </div>
         </main>
       </div>
+
+      {confirmState.open && (
+        <div className="chatbot-confirm-overlay" onClick={closeConfirmModal}>
+          <div
+            className="chatbot-confirm-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="chatbot-confirm-kicker">Confirm Action</div>
+
+            <h3 className="chatbot-confirm-title">
+              {confirmState.mode === "single"
+                ? "Delete this chat session?"
+                : "Delete recent chats?"}
+            </h3>
+
+            <p className="chatbot-confirm-text">
+              {confirmState.mode === "single"
+                ? "This chat session will be removed permanently from your saved history."
+                : "This will delete the 5 most recent chat sessions from your saved history."}
+            </p>
+
+            <div className="chatbot-confirm-actions">
+              <button
+                className="chatbot-confirm-cancel"
+                onClick={closeConfirmModal}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="chatbot-confirm-delete"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

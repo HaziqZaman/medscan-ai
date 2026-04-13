@@ -255,3 +255,62 @@
   .login-left { padding: 2rem 1.25rem; }
   .login-right { padding: 2rem 1.25rem; }
 }
+.login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  transition: all 0.25s ease;
+}
+
+.login-btn:disabled {
+  opacity: 0.95;
+  cursor: not-allowed;
+}
+
+.login-btn.is-loading {
+  transform: scale(0.995);
+}
+
+.login-btn.is-success {
+  background: linear-gradient(135deg, #159957, #127347);
+}
+
+.btn-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: medscanSpin 0.7s linear infinite;
+}
+
+.btn-check {
+  font-size: 1rem;
+  font-weight: 800;
+  animation: medscanPop 0.25s ease;
+}
+
+@keyframes medscanSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes medscanPop {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

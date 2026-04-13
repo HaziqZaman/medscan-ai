@@ -126,9 +126,12 @@ function Dashboard() {
         ? item.image_path.split("/").pop()
         : "Unknown file";
 
-      const confidence = Number.isFinite(Number(item.confidence))
-        ? Number(item.confidence) * 100
-        : 0;
+      const rawConfidence = Number(item.confidence);
+
+      const confidence =
+        item.model_type === "model_a" && Number.isFinite(rawConfidence)
+          ? (rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence)
+          : null;
 
       const date = item.created_at
         ? new Date(item.created_at).toLocaleDateString()
@@ -138,7 +141,9 @@ function Dashboard() {
         id: item.id,
         filename,
         result: item.prediction_label || "Unknown",
-        confidence: Number(confidence.toFixed(2)),
+        confidence:
+          confidence !== null ? Number(confidence.toFixed(2)) : null,
+        modelType: item.model_type,
         date,
       };
     });
@@ -190,7 +195,7 @@ function Dashboard() {
                 <tr>
                   <th>File</th>
                   <th>Result</th>
-                  <th>Confidence</th>
+                  <th>Assessment</th>
                   <th>Date</th>
                 </tr>
               </thead>
@@ -208,15 +213,21 @@ function Dashboard() {
                       </span>
                     </td>
                     <td>
-                      <div className="confidence-bar">
-                        <div className="conf-track">
-                          <div
-                            className="conf-fill"
-                            style={{ width: `${row.confidence}%` }}
-                          />
+                      {row.modelType === "model_a" ? (
+                        <div className="confidence-bar">
+                          <div className="conf-track">
+                            <div
+                              className="conf-fill"
+                              style={{ width: `${row.confidence}%` }}
+                            />
+                          </div>
+                          {row.confidence}%
                         </div>
-                        {row.confidence}%
-                      </div>
+                      ) : (
+                        <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                          Feature-based interpretation
+                        </span>
+                      )}
                     </td>
                     <td>{row.date}</td>
                   </tr>

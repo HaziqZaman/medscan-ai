@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 import "./Login.css";
 
 function Register() {
@@ -7,42 +8,60 @@ function Register() {
     name: "",
     email: "",
     password: "",
-    confirm: ""
+    confirm: "",
   });
-  const navigate = useNavigate();
 
-  const handleChange = (e) =>
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleChange = (e) => {
+    if (isSubmitting || isSuccess) return;
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleRegister = async () => {
-    if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.confirm.trim()) {
-      alert("Please fill in all fields");
+    if (isSubmitting || isSuccess) return;
+
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const password = form.password;
+    const confirm = form.confirm;
+
+    if (!name || !email || !password || !confirm) {
+      toast.error("Please fill in all fields");
       return;
     }
 
-    if (form.password !== form.confirm) {
-      alert("Passwords do not match");
+    if (password !== confirm) {
+      toast.error("Passwords do not match");
       return;
     }
+
+    setIsSubmitting(true);
+    const toastId = toast.loading("Creating your account...");
 
     try {
       const response = await fetch("http://127.0.0.1:8000/auth/register", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          password: form.password
-        })
+          name,
+          email,
+          password,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert("Registration successful");
-        navigate("/");
+        setIsSuccess(true);
+        toast.success("Registration successful", { id: toastId });
+
+        setTimeout(() => {
+          window.location.replace("/");
+        }, 700);
       } else {
         let message = "Registration failed";
 
@@ -52,20 +71,37 @@ function Register() {
           message = data.detail[0]?.msg || message;
         }
 
-        alert(message);
+        setIsSubmitting(false);
+        toast.error(message, { id: toastId });
       }
     } catch (error) {
       console.error(error);
-      alert("Server connection error");
+      setIsSubmitting(false);
+      toast.error("Server connection error", { id: toastId });
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleRegister();
     }
   };
 
   return (
     <div className="login-page">
-      {/* LEFT */}
       <div className="login-left">
-        <div className="login-brand">MedScan <span>AI</span></div>
-        <h1>Join the<br /><span>future</span> of<br />pathology.</h1>
+        <div className="login-brand">
+          MedScan <span>AI</span>
+        </div>
+
+        <h1>
+          Join the
+          <br />
+          <span>future</span> of
+          <br />
+          pathology.
+        </h1>
+
         <p>
           Create your account and start exploring AI-powered breast cancer
           histopathology analysis.
@@ -78,7 +114,7 @@ function Register() {
             "A dedicated knowledge center for histopathology",
             "RAG based Chatbot for Medical Queries",
             "Grad-CAM Visual Explanations",
-            "Educational Use Only"
+            "Educational Use Only",
           ].map((t) => (
             <div className="login-tag" key={t}>
               <div className="login-tag-dot" />
@@ -88,10 +124,10 @@ function Register() {
         </div>
       </div>
 
-      {/* RIGHT */}
       <div className="login-right">
         <div className="login-form-container">
           <div className="login-edu-badge">Educational Platform</div>
+
           <h2>Create account</h2>
           <p>Join MedScan AI as a student or trainee</p>
 
@@ -103,6 +139,8 @@ function Register() {
               placeholder="Your full name"
               value={form.name}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
@@ -114,6 +152,8 @@ function Register() {
               placeholder="student@university.edu"
               value={form.email}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
@@ -125,6 +165,8 @@ function Register() {
               placeholder="••••••••"
               value={form.password}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
@@ -136,11 +178,29 @@ function Register() {
               placeholder="••••••••"
               value={form.confirm}
               onChange={handleChange}
+              onKeyDown={handleKeyDown}
+              disabled={isSubmitting || isSuccess}
             />
           </div>
 
-          <button className="login-btn" onClick={handleRegister}>
-            Create Account
+          <button
+            className={`login-btn ${isSuccess ? "is-success" : ""}`}
+            onClick={handleRegister}
+            disabled={isSubmitting || isSuccess}
+          >
+            {isSubmitting && !isSuccess ? (
+              <span className="btn-content">
+                <span className="btn-spinner" />
+                <span>Creating Account...</span>
+              </span>
+            ) : isSuccess ? (
+              <span className="btn-content">
+                <span className="btn-check">✓</span>
+                <span>Success</span>
+              </span>
+            ) : (
+              <span className="btn-content">Create Account</span>
+            )}
           </button>
 
           <div className="login-register" style={{ marginTop: "1.25rem" }}>
