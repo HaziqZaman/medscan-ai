@@ -74,7 +74,9 @@ function Register() {
         <div className="login-tags">
           {[
             "IDC Breast Cancer Detection",
-            "Tumor Grading with ResNet-18",
+            "Tumor Grading",
+            "A dedicated knowledge center for histopathology",
+            "RAG based Chatbot for Medical Queries",
             "Grad-CAM Visual Explanations",
             "Educational Use Only"
           ].map((t) => (

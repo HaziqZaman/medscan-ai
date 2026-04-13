@@ -157,6 +157,44 @@ def get_chat_sessions_by_user(db: Session, user_id: int, skip: int = 0, limit: i
         .limit(limit)
         .all()
     )
+def delete_chat_session_by_id_and_user(db: Session, session_id: int, user_id: int) -> bool:
+    session = (
+        db.query(ChatSession)
+        .filter(
+            ChatSession.id == session_id,
+            ChatSession.user_id == user_id,
+        )
+        .first()
+    )
+
+    if not session:
+        return False
+
+    db.delete(session)
+    db.commit()
+    return True
+
+
+def delete_recent_chat_sessions_by_user(
+    db: Session,
+    user_id: int,
+    limit: int = 5,
+) -> int:
+    recent_sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .order_by(ChatSession.updated_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    deleted_count = 0
+    for session in recent_sessions:
+        db.delete(session)
+        deleted_count += 1
+
+    db.commit()
+    return deleted_count
 
 
 def update_chat_session_timestamp(db: Session, session_id: int):
@@ -244,6 +282,54 @@ def generate_chat_title_from_message(message: str) -> str:
 
 
 def build_case_summary(case: AnalysisCase | None) -> str | None:
+    if not case:
+        return None
+
+    extra_data = case.extra_data or {}
+
+    def safe(value, fallback="N/A"):
+        return value if value not in (None, "", []) else fallback
+
+    lines = [
+        f"Case ID: {case.id}",
+        f"Model: {safe(case.model_type)}",
+        f"Result: {safe(case.prediction_label)}",
+        f"Confidence: {safe(case.confidence)}",
+    ]
+
+    if case.model_type == "model_a":
+        if extra_data.get("note"):
+            lines.append(f"Note: {extra_data.get('note')}")
+
+    elif case.model_type == "model_b":
+        combined = extra_data.get("combined_result", {}) or {}
+        b1 = (extra_data.get("b1_result", {}) or {}).get("findings", {}) or {}
+        b2 = (extra_data.get("b2_result", {}) or {}).get("findings", {}) or {}
+
+        if combined.get("grade_support"):
+            lines.append(f"Grade Support: {combined.get('grade_support')}")
+
+        if b1.get("nuclei_density"):
+            lines.append(f"Nuclei Density: {b1.get('nuclei_density')}")
+
+        if b2.get("mitotic_activity_level"):
+            lines.append(f"Mitotic Activity: {b2.get('mitotic_activity_level')}")
+
+    return "\n".join(lines)
+def delete_all_chat_sessions_by_user(db: Session, user_id: int) -> int:
+    sessions = (
+        db.query(ChatSession)
+        .filter(ChatSession.user_id == user_id)
+        .all()
+    )
+
+    deleted_count = 0
+    for session in sessions:
+        db.delete(session)
+        deleted_count += 1
+
+    db.commit()
+    return deleted_count
     if not case:
         return None
 

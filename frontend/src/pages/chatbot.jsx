@@ -6,6 +6,8 @@ import {
   getChatSessionMessages,
   getChatSessions,
   queryChatbot,
+  deleteChatSession,
+  deleteRecentChats,
 } from "../services/api";
 import "./chatbot.css";
 
@@ -18,22 +20,57 @@ function formatTime(value) {
   }
 }
 
-function SourceList({ sources }) {
+function normalizeSources(value) {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set();
+  const cleaned = [];
+
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+
+    const title = (item.title || "").trim();
+    const source = (item.source || "").trim();
+    const url = (item.url || "").trim();
+    const chunkId = (item.chunk_id || "").trim();
+
+    if (!title && !url) continue;
+
+    const key = `${title}__${source}__${chunkId}__${url}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    cleaned.push({
+      title: title || "Medical reference",
+      source,
+      url,
+      chunk_id: chunkId,
+    });
+  }
+
+  return cleaned;
+}
+
+function SourceLine({ sources }) {
   if (!Array.isArray(sources) || sources.length === 0) return null;
 
   return (
-    <div className="chatbot-sources">
-      <div className="chatbot-sources-title">Sources</div>
-      <div className="chatbot-source-list">
+    <div className="chatbot-references">
+      <span className="chatbot-references-label">References:</span>
+      <span className="chatbot-references-items">
         {sources.map((source, index) => (
-          <div
-            key={`${source.title || "source"}-${index}`}
-            className="chatbot-source-chip"
-          >
-            {source.title || "Medical reference"}
-          </div>
+          <span key={`${source.title || "source"}-${index}`}>
+            {index > 0 ? " · " : ""}
+            {source.url ? (
+              <a href={source.url} target="_blank" rel="noreferrer">
+                {source.title || "Medical reference"}
+              </a>
+            ) : (
+              <span>{source.title || "Medical reference"}</span>
+            )}
+          </span>
         ))}
-      </div>
+      </span>
     </div>
   );
 }
@@ -54,16 +91,16 @@ function MessageBubble({ message }) {
 
         {!isUser && message.used_case_summary ? (
           <div className="chatbot-case-summary">
-            <div className="chatbot-case-summary-title">Used Case Context</div>
+            <div className="chatbot-case-summary-title">
+              Case details used for this answer
+            </div>
             <div className="chatbot-case-summary-text">
               {message.used_case_summary}
             </div>
           </div>
         ) : null}
 
-        {!isUser ? (
-          <SourceList sources={message.sources || message.sources_json} />
-        ) : null}
+        {!isUser ? <SourceLine sources={message.sources} /> : null}
 
         <div className="chatbot-message-time">{formatTime(message.created_at)}</div>
       </div>
@@ -79,7 +116,7 @@ function Chatbot() {
       id: "welcome",
       role: "assistant",
       content:
-        "Ask a breast-cancer-related educational question, or use “Explain Latest Case” to get a case-aware explanation.",
+        "Ask a breast-cancer-related educational question, or use “Explain Latest Case” for a case-aware explanation.",
       sources: [],
       created_at: new Date().toISOString(),
     },
@@ -88,6 +125,7 @@ function Chatbot() {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
 
   const messagesEndRef = useRef(null);
@@ -123,9 +161,14 @@ function Chatbot() {
       const data = await getChatSessionMessages(sessionId);
 
       const loadedMessages = Array.isArray(data?.messages) ? data.messages : [];
+      const normalizedMessages = loadedMessages.map((message) => ({
+        ...message,
+        sources: normalizeSources(message.sources || message.sources_json),
+      }));
+
       setMessages(
-        loadedMessages.length > 0
-          ? loadedMessages
+        normalizedMessages.length > 0
+          ? normalizedMessages
           : [
               {
                 id: "empty",
@@ -150,7 +193,7 @@ function Chatbot() {
         id: "welcome-new",
         role: "assistant",
         content:
-          "New chat started. Ask about IDC, DCIS, pathology, grading, biopsy, or explain your latest saved case.",
+          "New chat started. Ask about IDC, DCIS, biopsy, grading, staging, HER2, pathology, or explain your latest saved case.",
         sources: [],
         created_at: new Date().toISOString(),
       },
@@ -186,7 +229,7 @@ function Chatbot() {
         id: `assistant-${Date.now()}`,
         role: "assistant",
         content: result.answer,
-        sources: result.sources || [],
+        sources: normalizeSources(result.sources),
         used_case_summary: result.used_case_summary || null,
         created_at: new Date().toISOString(),
       };
@@ -236,7 +279,7 @@ function Chatbot() {
         id: `assistant-case-${Date.now()}`,
         role: "assistant",
         content: result.answer,
-        sources: result.sources || [],
+        sources: normalizeSources(result.sources),
         used_case_summary: result.used_case_summary || null,
         created_at: new Date().toISOString(),
       };
@@ -264,6 +307,71 @@ function Chatbot() {
     }
   }
 
+  async function handleDeleteSession(sessionId, event) {
+    event.stopPropagation();
+
+    const confirmed = window.confirm("Delete this chat session?");
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+      setError("");
+
+      await deleteChatSession(sessionId);
+
+      const wasActive = activeSessionId === sessionId;
+
+      await loadSessions();
+
+      if (wasActive) {
+        setActiveSessionId(null);
+        setMessages([
+          {
+            id: "welcome-after-delete",
+            role: "assistant",
+            content:
+              "Chat session deleted. You can start a new chat or open another saved session.",
+            sources: [],
+            created_at: new Date().toISOString(),
+          },
+        ]);
+      }
+    } catch (err) {
+      setError(err.message || "Failed to delete chat session.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handleDeleteRecentChats() {
+    const confirmed = window.confirm("Delete the 5 most recent chat sessions?");
+    if (!confirmed) return;
+
+    try {
+      setDeleting(true);
+      setError("");
+
+      await deleteRecentChats(5);
+      setActiveSessionId(null);
+      setMessages([
+        {
+          id: "welcome-after-recent-delete",
+          role: "assistant",
+          content:
+            "Recent chats deleted. You can start a new chat whenever you're ready.",
+          sources: [],
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      await loadSessions();
+    } catch (err) {
+      setError(err.message || "Failed to delete recent chats.");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   function handleKeyDown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -287,9 +395,18 @@ function Chatbot() {
               <h2>Chat Sessions</h2>
             </div>
 
-            <button className="chatbot-new-btn" onClick={startNewChat}>
-              + New Chat
-            </button>
+            <div className="chatbot-sidebar-actions">
+              <button className="chatbot-new-btn" onClick={startNewChat}>
+                + New Chat
+              </button>
+              <button
+                className="chatbot-delete-recent-btn"
+                onClick={handleDeleteRecentChats}
+                disabled={deleting || loadingSessions || visibleSessions.length === 0}
+              >
+                Delete Recent
+              </button>
+            </div>
           </div>
 
           {loadingSessions ? (
@@ -299,18 +416,31 @@ function Chatbot() {
           ) : (
             <div className="chatbot-session-list">
               {visibleSessions.map((session) => (
-                <button
+                <div
                   key={session.id}
                   className={`chatbot-session-item ${
                     activeSessionId === session.id ? "active" : ""
                   }`}
-                  onClick={() => openSession(session.id)}
                 >
-                  <div className="chatbot-session-title">{session.title}</div>
-                  <div className="chatbot-session-time">
-                    {formatTime(session.updated_at)}
-                  </div>
-                </button>
+                  <button
+                    className="chatbot-session-open"
+                    onClick={() => openSession(session.id)}
+                  >
+                    <div className="chatbot-session-title">{session.title}</div>
+                    <div className="chatbot-session-time">
+                      {formatTime(session.updated_at)}
+                    </div>
+                  </button>
+
+                  <button
+                    className="chatbot-session-delete"
+                    onClick={(event) => handleDeleteSession(session.id, event)}
+                    disabled={deleting}
+                    title="Delete this chat"
+                  >
+                    Delete
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -322,7 +452,7 @@ function Chatbot() {
               <div className="chatbot-kicker">Educational Assistant</div>
               <h1>Breast Cancer Chatbot</h1>
               <p>
-                Medical-only educational chatbot using uploaded knowledge and saved case context.
+                Grounded educational chatbot for breast-cancer topics and saved case explanations.
               </p>
             </div>
 
@@ -361,7 +491,7 @@ function Chatbot() {
             <textarea
               className="chatbot-input"
               rows={3}
-              placeholder="Ask about IDC, biopsy, grading, pathology, metastasis, or your saved case..."
+              placeholder="Ask about IDC, DCIS, biopsy, grading, staging, HER2, pathology, metastasis, or your saved case..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

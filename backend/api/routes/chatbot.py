@@ -1,6 +1,6 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from auth.dependencies import get_current_user
@@ -16,6 +16,8 @@ from database.crud import (
     update_chat_session_title,
     generate_chat_title_from_message,
     build_case_summary,
+    delete_chat_session_by_id_and_user,
+    delete_recent_chat_sessions_by_user,
 )
 from api.schemas import (
     ChatQueryRequest,
@@ -159,6 +161,23 @@ def get_chat_history_sessions(
     return sessions
 
 
+@router.delete("/history/recent", response_model=Dict[str, int])
+def delete_recent_chats(
+    limit: int = Query(5, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    deleted_count = delete_recent_chat_sessions_by_user(
+        db=db,
+        user_id=current_user.id,
+        limit=limit,
+    )
+
+    return {
+        "deleted_count": deleted_count,
+    }
+
+
 @router.get("/history/{session_id}", response_model=ChatHistoryResponse)
 def get_chat_history_messages(
     session_id: int,
@@ -187,6 +206,29 @@ def get_chat_history_messages(
         title=session.title,
         messages=[ChatMessageResponse.model_validate(message) for message in messages],
     )
+
+
+@router.delete("/history/{session_id}", response_model=Dict[str, str])
+def delete_single_chat_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    deleted = delete_chat_session_by_id_and_user(
+        db=db,
+        session_id=session_id,
+        user_id=current_user.id,
+    )
+
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Chat session not found.",
+        )
+
+    return {
+        "detail": "Chat session deleted successfully.",
+    }
 
 
 @router.post("/explain-latest-case", response_model=ChatQueryResponse)

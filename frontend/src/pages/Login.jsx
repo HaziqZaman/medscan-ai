@@ -62,7 +62,7 @@ function Login() {
           {[
             "IDC Breast Cancer Detection",
             "Cancer Cells Grading",
-            "LVI Tissues Analysis",
+            "A dedicated knowledge center for histopathology",
             "RAG based Chatbot for Medical Queries",
             "Educational Use Only(Non-Clinical Tool)",
           ].map((tag) => (

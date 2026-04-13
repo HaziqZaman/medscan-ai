@@ -9,12 +9,13 @@ from rag.config import (
     BASE_DIR,
     CHUNKS_PATH,
     VECTOR_PATH,
-    GEMINI_API_KEY,
-    GEMINI_EMBEDDING_MODEL,
-    EMBEDDING_DIMENSION,
-    EMBEDDING_BATCH_SIZE,
     ensure_directories,
 )
+
+LOCAL_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+LOCAL_EMBEDDING_DIMENSION = 384
+LOCAL_EMBEDDING_BATCH_SIZE = 32
+LOCAL_EMBEDDING_DEVICE = "cpu"
 
 
 def load_chunk_records() -> List[Dict]:
@@ -38,42 +39,36 @@ def normalize_vector(values: List[float]) -> List[float]:
     return (vector / norm).tolist()
 
 
-def chunked(items: List[str], batch_size: int):
-    for start in range(0, len(items), batch_size):
-        yield items[start:start + batch_size]
+def get_embedding_model():
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError as exc:
+        raise RuntimeError(
+            "Local embeddings require sentence-transformers. "
+            "Install it with: pip install sentence-transformers torch"
+        ) from exc
+
+    return SentenceTransformer(
+        LOCAL_EMBEDDING_MODEL,
+        device=LOCAL_EMBEDDING_DEVICE,
+    )
 
 
-def get_genai_client():
-    if not GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY not found. Check backend/.env")
-
-    from google import genai
-    return genai.Client(api_key=GEMINI_API_KEY)
-
-
-def embed_texts(texts: List[str], task_type: str) -> List[List[float]]:
+def embed_texts(texts: List[str], task_type: str = "RETRIEVAL_DOCUMENT") -> List[List[float]]:
     if not texts:
         return []
 
-    from google.genai import types
+    model = get_embedding_model()
 
-    client = get_genai_client()
-    all_vectors: List[List[float]] = []
+    vectors = model.encode(
+        texts,
+        batch_size=LOCAL_EMBEDDING_BATCH_SIZE,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    )
 
-    for batch in chunked(texts, EMBEDDING_BATCH_SIZE):
-        result = client.models.embed_content(
-            model=GEMINI_EMBEDDING_MODEL,
-            contents=batch,
-            config=types.EmbedContentConfig(
-                task_type=task_type,
-                output_dimensionality=EMBEDDING_DIMENSION,
-            ),
-        )
-
-        batch_vectors = [normalize_vector(item.values) for item in result.embeddings]
-        all_vectors.extend(batch_vectors)
-
-    return all_vectors
+    return [np.asarray(vector, dtype=np.float32).tolist() for vector in vectors]
 
 
 def embed_query(query: str) -> List[float]:
@@ -100,8 +95,8 @@ def build_vector_index() -> Dict:
         )
 
     return {
-        "model": GEMINI_EMBEDDING_MODEL,
-        "dimension": EMBEDDING_DIMENSION,
+        "model": LOCAL_EMBEDDING_MODEL,
+        "dimension": LOCAL_EMBEDDING_DIMENSION,
         "count": len(vector_records),
         "records": vector_records,
     }

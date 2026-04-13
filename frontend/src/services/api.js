@@ -87,6 +87,24 @@ export async function getChatSessionMessages(sessionId) {
   return parseResponse(response);
 }
 
+export async function deleteChatSession(sessionId) {
+  const response = await fetch(`${API_BASE}/chatbot/history/${sessionId}`, {
+    method: "DELETE",
+    headers: buildHeaders(),
+  });
+
+  return parseResponse(response);
+}
+
+export async function deleteRecentChats(limit = 5) {
+  const response = await fetch(`${API_BASE}/chatbot/history/recent?limit=${limit}`, {
+    method: "DELETE",
+    headers: buildHeaders(),
+  });
+
+  return parseResponse(response);
+}
+
 export async function getCases() {
   const response = await fetch(`${API_BASE}/cases`, {
     method: "GET",
