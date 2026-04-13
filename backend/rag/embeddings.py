@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
@@ -16,6 +15,8 @@ LOCAL_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 LOCAL_EMBEDDING_DIMENSION = 384
 LOCAL_EMBEDDING_BATCH_SIZE = 32
 LOCAL_EMBEDDING_DEVICE = "cpu"
+
+_embedding_model = None
 
 
 def load_chunk_records() -> List[Dict]:
@@ -40,18 +41,23 @@ def normalize_vector(values: List[float]) -> List[float]:
 
 
 def get_embedding_model():
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ImportError as exc:
-        raise RuntimeError(
-            "Local embeddings require sentence-transformers. "
-            "Install it with: pip install sentence-transformers torch"
-        ) from exc
+    global _embedding_model
 
-    return SentenceTransformer(
-        LOCAL_EMBEDDING_MODEL,
-        device=LOCAL_EMBEDDING_DEVICE,
-    )
+    if _embedding_model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as exc:
+            raise RuntimeError(
+                "Local embeddings require sentence-transformers. "
+                "Install it with: pip install sentence-transformers torch"
+            ) from exc
+
+        _embedding_model = SentenceTransformer(
+            LOCAL_EMBEDDING_MODEL,
+            device=LOCAL_EMBEDDING_DEVICE,
+        )
+
+    return _embedding_model
 
 
 def embed_texts(texts: List[str], task_type: str = "RETRIEVAL_DOCUMENT") -> List[List[float]]:
